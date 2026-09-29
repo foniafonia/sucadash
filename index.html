@@ -614,7 +614,8 @@ const postMat=new THREE.MeshStandardMaterial({color:0x1d1238});
 const walls=[];let wallId=0,lastItem=null,wave=0;
 function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
 function hudWave(){document.getElementById('waveN').textContent=wave;}
-function waveSpeed(){return Math.min(11,7+wave*.25);}
+function lvl(){return Math.floor((wave-1)/CYCLE.length)+1;}
+function waveSpeed(){return Math.min(13,7+wave*.25);}
 function newWall(type,speed){
  const g=new THREE.Group();g.position.set(0,-BH-5,SPAWN);scene.add(g);
  const w={id:++wallId,type,g,parts:[],z:SPAWN,rise:0,speed,revealed:type!=='word',spawnedNext:false,frontOff:BD/2,backOff:-BD/2};
@@ -657,7 +658,7 @@ function revealWall(w){w.revealed=true;const p=w.parts[w.correct];p.b.ghost=true
 const GAP_RH=1.3,gapGeo=new THREE.BoxGeometry(LW-.12,GAP_RH,BD);
 const GAP_SHAPES=[[[0,0],[1,0],[0,1],[1,1]],[[0,0],[0,1],[0,2]],[[0,0],[0,1],[0,2],[1,0]],[[0,0],[1,0],[2,0],[1,1]],[[0,0],[1,0],[1,1],[2,1]],[[0,1],[1,1],[1,0],[2,0]]];
 function spawnGap(){
- const w=newWall('gap',Math.min(9,6.5+wave*.2));
+ const w=newWall('gap',Math.min(10.5,6.5+wave*.2));
  let sh=GAP_SHAPES[Math.floor(Math.random()*GAP_SHAPES.length)];
  const wd=Math.max(...sh.map(c=>c[0]))+1;
  const off=Math.floor(Math.random()*(LANES-wd+1)),flip=Math.random()<.5;
@@ -669,7 +670,7 @@ function spawnGap(){
 let tallMat=null,stepSign=null;
 function spawnSteps(){
  if(!tallMat){tallMat=bannerMat('¡SALTA DOS VECES!',W,TALL_H);stepSign=signMat('¡DOBLE SALTO!','#34b6ff',drawSteps);}
- const w=newWall('steps',Math.min(9,6+wave*.2));
+ const w=newWall('steps',Math.min(10.5,6+wave*.2));
  addPart(w,tallGeo,[sideMat,sideMat,sideMat,sideMat,tallMat,sideMat],0,TALL_H,BD,0,'tall');
  w.steps=shuffle([0,1,2,3,4]).slice(0,3);
  for(const i of w.steps)addPart(w,stepGeo,sideMat,laneX(i),STEP_H,STEP_D,BD/2+STEP_D/2,'step');
@@ -690,17 +691,17 @@ function drawBounce(x){x.beginPath();x.rect(190,60,90,230);fo(x,'#7a2fe0',8);
  x.strokeStyle='#9aa0b8';x.lineWidth=7;for(let i=0;i<4;i++){x.beginPath();x.ellipse(90,270-i*9,45,6,0,0,7);x.stroke();}
  x.beginPath();x.rect(35,228,110,16);fo(x,'#3ee07a',7);dashed(x,[90,222,190,-70,288,236]);}
 function spawnStairs(){
- const w=newWall('stairs',Math.min(8.5,5.8+wave*.18)),D=1.4;
+ const w=newWall('stairs',Math.min(9.5,5.8+wave*.18)),D=1.4;
  [[2.4,0],[1.6,D],[.8,2*D]].forEach(([h,dz])=>addPart(w,new THREE.BoxGeometry(W,h,D),sideMat,0,h,D,dz,'stair'));
  addSign(w,waveSign('stairs','¡ESCALERA!',drawStairs),2.4,.85);
 }
 function spawnHurdles(){
- const w=newWall('hurdles',Math.min(9,6.2+wave*.2));const hg=new THREE.BoxGeometry(W,.7,.5);
+ const w=newWall('hurdles',Math.min(10.5,6.2+wave*.2));const hg=new THREE.BoxGeometry(W,.7,.5);
  for(let i=0;i<3;i++)addPart(w,hg,sideMat,0,.7,.5,i*3.4,'hurdle');
  addSign(w,waveSign('hurdles','¡VALLAS!',drawHurdles),.7,.85);
 }
 function spawnPistons(){
- const w=newWall('pistons',Math.min(8,5.6+wave*.15));const pg=new THREE.BoxGeometry(LW-.12,3,BD);
+ const w=newWall('pistons',Math.min(9,5.6+wave*.15));const pg=new THREE.BoxGeometry(LW-.12,3,BD);
  w.pist=[];const base=Math.random()*6;
  for(let i=0;i<LANES;i++){addPart(w,pg,pistonMat,laneX(i),3,BD,0,'piston');const p=w.parts[w.parts.length-1];p.ph=base+i*1.3;w.pist.push(p);}
  w.pistH=(p,t)=>.15+2.85*(.5+.5*Math.sin(t*2.1+p.ph));
@@ -750,7 +751,7 @@ const pinkCore=new THREE.MeshBasicMaterial({color:0xffe0f0}),pinkHalo=new THREE.
 function spawnLaserWave(){lwaves.push({left:6+Math.min(4,Math.floor(wave/5)),t:.8,hit:false,chain:true});pop('¡LÁSERES!','Verde: salta · Rosa: esquiva','');}
 function spawnBeam(lw){
  const g=new THREE.Group();scene.add(g);
- const b={g,z:ZMIN-1.5,speed:Math.min(10.5,6.8+wave*.2),type:Math.random()<.5?'h':'v',xs:[],hitSet:new Set(),aiJ:new Set(),aiOk:new Map()};
+ const b={g,z:ZMIN-1.5,speed:Math.min(12,6.8+wave*.2),type:Math.random()<.5?'h':'v',xs:[],hitSet:new Set(),aiJ:new Set(),aiOk:new Map()};
  if(b.type==='h'){
   const c=new THREE.Mesh(hCore,greenCore),h=new THREE.Mesh(hHalo,greenHalo);c.rotation.z=h.rotation.z=Math.PI/2;c.position.y=h.position.y=.45;g.add(c,h);
   for(const k of[-1,1]){const e=glow(0x7dff9a,1.4);e.position.set(k*(W/2+1.1),.45,0);g.add(e);}
@@ -779,6 +780,7 @@ function updateLasers(dt){
 const CYCLE=['word','spikes','steps','word','laser','spikes','bounce','word','gap','hurdles','spikes','pistons','word','stairs','spikes','gap','laser'];
 function nextWave(){
  wave++;hudWave();
+ if(wave>1&&(wave-1)%CYCLE.length===0)pop('¡NIVEL '+lvl()+'!','Más rápido y más difícil','good');
  PAL=PALS[(wave-1)%PALS.length];sideMat=sideMats[PAL.n];
  const t=CYCLE[(wave-1)%CYCLE.length];
  if(t==='laser')spawnLaserWave();
@@ -788,9 +790,9 @@ function nextWave(){
  else if(t==='pistons')spawnPistons();
  else if(t==='bounce')spawnBounce();
  else if(t==='gap')spawnGap();
- else if(t==='spikes'){spawnWord(true);spawnSpikes(7+Math.min(3,Math.floor(wave/5)));}
- else{spawnWord(false);if(wave>1)spawnSpikes(5);}
- if(t!=='laser'&&wave>=4&&Math.random()<.65)lwaves.push({left:2+Math.min(3,Math.floor(wave/6)),t:2.2,hit:false,chain:false});
+ else if(t==='spikes'){spawnWord(true);spawnSpikes(5+Math.min(7,Math.floor(wave/3)));}
+ else{spawnWord(lvl()>=2&&Math.random()<Math.min(.6,(lvl()-1)*.2));if(wave>1)spawnSpikes(4+Math.min(4,lvl()));}
+ if(t!=='laser'&&wave>=4&&Math.random()<Math.min(.9,.5+lvl()*.1))lwaves.push({left:2+Math.min(4,Math.floor(wave/5)),t:2.2,hit:false,chain:false});
 }
 
 /* ---------- mystery boxes & powers ---------- */
