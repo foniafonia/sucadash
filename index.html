@@ -613,10 +613,10 @@ function newWall(type,speed){
  const w={id:++wallId,type,g,parts:[],z:SPAWN,rise:0,speed,revealed:type!=='word',spawnedNext:false,frontOff:BD/2,backOff:-BD/2};
  walls.push(w);return w;
 }
-function addPart(w,geo,mats,dx,h,d,dz,kind){
- const m=new THREE.Mesh(geo,mats);m.position.set(dx,h/2,dz);w.g.add(m);
+function addPart(w,geo,mats,dx,h,d,dz,kind,y0){
+ y0=y0||0;const m=new THREE.Mesh(geo,mats);m.position.set(dx,y0+h/2,dz);w.g.add(m);
  const wd=geo.parameters.width;
- const b=addBox({minX:dx-wd/2,maxX:dx+wd/2,minY:-99,maxY:-99,minZ:0,maxZ:0,vz:0,ghost:false,spike:false,kind,owner:w,dz,d,h});
+ const b=addBox({minX:dx-wd/2,maxX:dx+wd/2,minY:-99,maxY:-99,minZ:0,maxZ:0,vz:0,ghost:false,spike:false,kind,owner:w,dz,d,h,y0});
  w.parts.push({m,b});w.frontOff=Math.max(w.frontOff,dz+d/2);w.backOff=Math.min(w.backOff,dz-d/2);return m;
 }
 function addSign(w,mat,y,scale){const s=new THREE.Mesh(clueGeo,mat);s.scale.setScalar(scale);s.position.set(0,y+.4+3.3*640/512*scale/2,-.2);s.rotation.x=-.14;w.g.add(s);for(const k of[-1,1]){const p=new THREE.Mesh(postGeo,postMat);p.position.set(k*1.1*scale,y+.3,-.2);w.g.add(p);}}
@@ -647,6 +647,18 @@ function spawnWord(withSpikes){
  addSign(w,mode==='rev'?heClueMat(item):clueMat(item),BH,1);
 }
 function revealWall(w){w.revealed=true;const p=w.parts[w.correct];p.b.ghost=true;p.m.material=[ghostMat,ghostMat,ghostMat,ghostMat,w.ghostFace,ghostMat];}
+const GAP_RH=1.3,gapGeo=new THREE.BoxGeometry(LW-.12,GAP_RH,BD);
+const GAP_SHAPES=[[[0,0],[1,0],[0,1],[1,1]],[[0,0],[0,1],[0,2]],[[0,0],[0,1],[0,2],[1,0]],[[0,0],[1,0],[2,0],[1,1]],[[0,0],[1,0],[1,1],[2,1]],[[0,1],[1,1],[1,0],[2,0]]];
+function spawnGap(){
+ const w=newWall('gap',Math.min(9,6.5+wave*.2));
+ let sh=GAP_SHAPES[Math.floor(Math.random()*GAP_SHAPES.length)];
+ const wd=Math.max(...sh.map(c=>c[0]))+1;
+ const off=Math.floor(Math.random()*(LANES-wd+1)),flip=Math.random()<.5;
+ const hole=new Set(sh.map(([cx,cy])=>(off+(flip?wd-1-cx:cx))+','+cy));
+ w.passCols=[];
+ for(let i=0;i<LANES;i++)if(hole.has(i+',0')&&hole.has(i+',1'))w.passCols.push(i);
+ for(let i=0;i<LANES;i++)for(let j=0;j<3;j++)if(!hole.has(i+','+j))addPart(w,gapGeo,sideMat,laneX(i),GAP_RH,BD,0,'gap',j*GAP_RH);
+}
 let tallMat=null,stepSign=null;
 function spawnSteps(){
  if(!tallMat){tallMat=bannerMat('¡SALTA DOS VECES!',W,TALL_H);stepSign=signMat('¡DOBLE SALTO!','#34b6ff',drawSteps);}
@@ -757,7 +769,7 @@ function updateLasers(dt){
  for(let i=lwaves.length-1;i>=0;i--){const L=lwaves[i];if(L.left===0&&!beams.some(b=>b.lw===L)){lwaves.splice(i,1);if(L.chain){if(!L.hit&&hero.state==='play')pop('¡BIEN!','Láseres esquivados','good');nextWave();}}}
 }
 
-const CYCLE=['word','spikes','steps','word','laser','spikes','bounce','word','hurdles','spikes','pistons','word','stairs','spikes','laser'];
+const CYCLE=['word','spikes','steps','word','laser','spikes','bounce','word','gap','hurdles','spikes','pistons','word','stairs','spikes','gap','laser'];
 function nextWave(){
  wave++;hudWave();
  PAL=PALS[(wave-1)%PALS.length];sideMat=sideMats[PAL.n];
@@ -768,6 +780,7 @@ function nextWave(){
  else if(t==='hurdles')spawnHurdles();
  else if(t==='pistons')spawnPistons();
  else if(t==='bounce')spawnBounce();
+ else if(t==='gap')spawnGap();
  else if(t==='spikes'){spawnWord(true);spawnSpikes(7+Math.min(3,Math.floor(wave/5)));}
  else{spawnWord(false);if(wave>1)spawnSpikes(5);}
  if(t!=='laser'&&wave>=4&&Math.random()<.65)lwaves.push({left:2+Math.min(3,Math.floor(wave/6)),t:2.2,hit:false,chain:false});
@@ -1206,6 +1219,10 @@ function aiMove(c,dt){
    if(c.j2)tz=w.z-BD/2-3;
   }
  }
+ else if(w&&w.type==='gap'){
+  if(c.plan!==w.id&&w.z>-19){c.plan=w.id;c.col=Math.random()<(c.hero?.9:.7)?w.passCols[Math.floor(Math.random()*w.passCols.length)]:Math.floor(Math.random()*LANES);}
+  if(c.plan===w.id)tx=laneX(c.col)+c.off*.3;
+ }
  else if(w&&w.type==='bounce'){
   if(c.plan!==w.id&&w.z>-18){c.plan=w.id;const non=[0,1,2,3,4].filter(i=>!w.pads.includes(i));c.col=Math.random()<(c.hero?.9:.72)?w.pads[Math.floor(Math.random()*w.pads.length)]:non[Math.floor(Math.random()*non.length)];}
   if(c.plan===w.id)tx=laneX(c.col)+c.off*.3;
@@ -1267,7 +1284,7 @@ function respawn(c){
 function reasonOf(c){const k=c.cause;if(!k)return'¡Te caíste!';if(k==='spike')return'¡Cuidado con los pinchos!';if(k==='laser')return'¡Cuidado con el láser!';if(k==='punch')return'¡Te han dado un puñetazo!';if(k.type==='steps')return'Salta dos veces';if(k.type==='stairs')return'Sube la escalera saltando';if(k.type==='hurdles')return'Salta las vallas';if(k.type==='pistons')return'Pasa cuando el pistón baje';if(k.type==='bounce')return'Pisa el trampolín';if(k.type==='word'){lastMiss=labelOf(k);return'Era '+lastMiss;}return'¡Te caíste!';}
 function heroPass(w){
  if(w.type==='word'){hits++;streak++;updScore();pop('¡BIEN!',labelOf(w),'good');}
- else pop('¡BIEN!',{steps:'Doble salto',stairs:'Escalera superada',hurdles:'Vallas superadas',pistons:'Pistones superados',bounce:'¡Qué salto!'}[w.type]||'¡Bien!','good');
+ else pop('¡BIEN!',{steps:'Doble salto',stairs:'Escalera superada',hurdles:'Vallas superadas',pistons:'Pistones superados',bounce:'¡Qué salto!',gap:'¡Por el hueco!'}[w.type]||'¡Bien!','good');
  burst(new THREE.Vector3(hero.x,hero.y+1.6,hero.z));
 }
 function angLerp(a,b,t){let d=((b-a+Math.PI)%(Math.PI*2)+Math.PI*2)%(Math.PI*2)-Math.PI;return a+d*t;}
@@ -1282,7 +1299,7 @@ function update(dt){
   const w=walls[i];
   w.rise=Math.min(1,w.rise+dt/.8);const e=1-Math.pow(1-w.rise,3);const yoff=(-BH-5)*(1-e);
   w.z+=w.speed*dt;w.g.position.set(0,yoff,w.z);
-  for(const p of w.parts){const b=p.b;if(p.ph!=null){b.h=w.pistH(p,T);p.m.scale.y=b.h/3;p.m.position.y=b.h/2;}b.minZ=w.z+b.dz-b.d/2;b.maxZ=w.z+b.dz+b.d/2;b.minY=yoff;b.maxY=yoff+b.h;b.vz=w.speed;}
+  for(const p of w.parts){const b=p.b;if(p.ph!=null){b.h=w.pistH(p,T);p.m.scale.y=b.h/3;p.m.position.y=b.h/2;}b.minZ=w.z+b.dz-b.d/2;b.maxZ=w.z+b.dz+b.d/2;b.minY=yoff+(b.y0||0);b.maxY=b.minY+b.h;b.vz=w.speed;}
   const front=w.z+w.frontOff;
   if(!w.revealed&&front>=(hero.state==='play'?hero.z:minZ)-R-1.2)revealWall(w);
   if(!w.spawnedNext&&front>P1-2){w.spawnedNext=true;nextWave();}
