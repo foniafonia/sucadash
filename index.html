@@ -1113,6 +1113,14 @@ function orient(){const w=innerWidth,h=innerHeight;rotated=h>w*1.05&&matchMedia(
 addEventListener('resize',orient);addEventListener('orientationchange',()=>setTimeout(orient,250));
 document.addEventListener('touchmove',e=>{if(!(e.target.closest&&e.target.closest('.helpcard')))e.preventDefault();},{passive:false});
 document.addEventListener('gesturestart',e=>e.preventDefault());
+/* Voz: clips Piper es_ES-sharvard-medium (CC-BY 3.0). Una sola voz; si falta un clip no se dice nada. */
+const vslug=w=>w.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+let vq=0;
+function speak(names){
+ if(auto)return;const id=++vq;let i=0;
+ const next=()=>{if(id!==vq||i>=names.length)return;const a=new Audio('voz/'+names[i++]+'.mp3');a.volume=.9;a.onended=next;a.onerror=()=>{vq++;};a.play().catch(()=>{vq++;});};
+ next();
+}
 let musicEl=null,musicOn=true;
 try{musicOn=localStorage.getItem('sucadash-music')!=='0';}catch(_){}
 function startMusic(){
@@ -1334,9 +1342,9 @@ function respawn(c){
  c.g.rotation.set(0,0,0);c.body.rotation.set(0,0,0);
  for(const w of walls)if(w.z+w.frontOff>=c.z-R-2)c.passed.add(w.id);
 }
-function reasonOf(c){const k=c.cause;if(!k)return'¡Te caíste!';if(k==='spike')return'¡Cuidado con los pinchos!';if(k==='laser')return'¡Cuidado con el láser!';if(k==='punch')return'¡Te han dado un puñetazo!';if(k.type==='steps')return'Salta dos veces';if(k.type==='stairs')return'Sube la escalera saltando';if(k.type==='hurdles')return'Salta las vallas';if(k.type==='pistons')return'Pasa cuando el pistón baje';if(k.type==='bounce')return'Pisa el trampolín';if(k.type==='word'){lastMiss=labelOf(k);return'Era '+lastMiss;}return'¡Te caíste!';}
+function reasonOf(c){const k=c.cause;if(!k)return'¡Te caíste!';if(k==='spike')return'¡Cuidado con los pinchos!';if(k==='laser')return'¡Cuidado con el láser!';if(k==='punch')return'¡Te han dado un puñetazo!';if(k.type==='steps')return'Salta dos veces';if(k.type==='stairs')return'Sube la escalera saltando';if(k.type==='hurdles')return'Salta las vallas';if(k.type==='pistons')return'Pasa cuando el pistón baje';if(k.type==='bounce')return'Pisa el trampolín';if(k.type==='word'){lastMiss=labelOf(k);speak(['era',vslug(k.item.w)]);return'Era '+lastMiss;}return'¡Te caíste!';}
 function heroPass(w){
- if(w.type==='word'){hits++;streak++;updScore();pop('¡BIEN!',labelOf(w),'good');}
+ if(w.type==='word'){hits++;streak++;updScore();pop('¡BIEN!',labelOf(w),'good');speak([vslug(w.item.w)]);}
  else pop('¡BIEN!',{steps:'Doble salto',stairs:'Escalera superada',hurdles:'Vallas superadas',pistons:'Pistones superados',bounce:'¡Qué salto!',gap:'¡Por el hueco!'}[w.type]||'¡Bien!','good');
  burst(new THREE.Vector3(hero.x,hero.y+1.6,hero.z));
 }

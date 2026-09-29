@@ -52,3 +52,6 @@ Al terminar cada partida se ganan monedas y XP según los aciertos y la oleada a
 
 ## Música
 "Bonkers for Arcades" de Eric Matyas, soundimage.org (libre con crédito). Misma pista que FonoKart. Botón de música arriba a la derecha para silenciarla.
+
+## Voz
+Voz generada con Piper (Open Home Foundation), modelo es_ES-sharvard-medium, entrenado sobre el corpus de la Universidad de Edimburgo. Licencia CC-BY 3.0. Clips en `voz/`: dice la palabra al acertar y «Era …» al fallar.
