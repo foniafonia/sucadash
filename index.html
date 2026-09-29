@@ -164,7 +164,7 @@ body{color:#fff;font-family:'Nunito',system-ui,sans-serif;touch-action:none;-web
     <div class="logo"><div class="t1">SUCÁ DASH</div><div class="t2">¡ELIGE LA PALABRA Y NO TE CAIGAS!</div></div>
     <div class="coinRow" id="coinRowStart"><span class="ic"></span><span id="coinsStart">0</span></div>
     <div class="startBtns"><button class="gbtn" id="play" type="button">JUGAR</button><button class="gbtn alt" id="howBtn" type="button">Cómo se juega</button></div>
-    <div class="menuBtns"><button class="gbtn alt" id="shopBtnStart" type="button">🎨 TIENDA</button><button class="gbtn alt" id="passBtnStart" type="button">🎖️ PASE DE BATALLA</button></div>
+    <div class="menuBtns"><button class="gbtn alt" id="charBtnStart" type="button">🧑 PERSONAJE</button><button class="gbtn alt" id="shopBtnStart" type="button">🎨 TIENDA</button><button class="gbtn alt" id="passBtnStart" type="button">🎖️ PASE DE BATALLA</button></div>
     <div class="hint">Joystick o flechas para moverte · B o espacio para saltar</div>
    </div>
    <div class="help" id="help" hidden>
@@ -195,6 +195,13 @@ body{color:#fff;font-family:'Nunito',system-ui,sans-serif;touch-action:none;-web
     <div class="shopTop"><h2>Tienda de skins</h2><div class="coinRow"><span class="ic"></span><span id="coinsShop">0</span></div></div>
     <div class="skinGrid" id="skinGrid"></div>
     <button class="gbtn" id="shopClose" type="button">Cerrar</button>
+   </div>
+  </div>
+  <div class="shop" id="chars" hidden>
+   <div class="shopcard">
+    <div class="shopTop"><h2>Elige tu personaje</h2></div>
+    <div class="skinGrid" id="charGrid"></div>
+    <button class="gbtn" id="charClose" type="button">Cerrar</button>
    </div>
   </div>
   <div class="pass" id="pass" hidden>
@@ -997,8 +1004,8 @@ const SKINS=[
 ];
 const PROFILE_KEY='sucadash-profile-v1';
 function loadProfile(){
- try{const raw=localStorage.getItem(PROFILE_KEY);if(raw){const p=JSON.parse(raw);if(p&&typeof p==='object')return{coins:p.coins|0,xp:p.xp|0,owned:Array.isArray(p.owned)&&p.owned.length?p.owned:['default'],equipped:p.equipped||'default'};}}catch(_){}
- return{coins:0,xp:0,owned:['default'],equipped:'default'};
+ try{const raw=localStorage.getItem(PROFILE_KEY);if(raw){const p=JSON.parse(raw);if(p&&typeof p==='object')return{coins:p.coins|0,xp:p.xp|0,owned:Array.isArray(p.owned)&&p.owned.length?p.owned:['default'],equipped:p.equipped||'default',char:p.char||'clasico'};}}catch(_){}
+ return{coins:0,xp:0,owned:['default'],equipped:'default',char:'clasico'};
 }
 const profile=loadProfile();
 function saveProfile(){try{localStorage.setItem(PROFILE_KEY,JSON.stringify(profile));}catch(_){}}
@@ -1007,7 +1014,24 @@ function bpLevel(){return Math.min(BP_MAX,Math.floor(profile.xp/BP_STEP));}
 function checkBpUnlocks(){SKINS.forEach(sk=>{if(sk.bp&&sk.bp<=bpLevel()&&!profile.owned.includes(sk.id))profile.owned.push(sk.id);});}
 checkBpUnlocks();saveProfile();
 function applySkinVisual(c,sk){const sm=toon(sk.shirt),pm=toon(sk.pants);c.shirtParts.forEach(m=>m.material=sm);c.pantsParts.forEach(m=>m.material=pm);}
-const hero=makeChar({name:'TÚ',tagColor:'#ffe14d',color:0xe53945,skin:0xffd1a6,hair:0x6b3a1e,leg:0x1f2a44,kipa:'knit',katan:'blue',peot:true,lane:2,z:HERO_Z,hero:true});
+const CHARS=[
+ {id:'clasico',name:'Clásico',skin:0xffd1a6,hair:0x6b3a1e,kipa:'knit',katan:'blue',peot:true},
+ {id:'rabino',name:'Rabino',skin:0xf2c38f,hair:0xcfc9bd,kipa:0x15151c,tallit:'black',tefillin:true,beard:0xe8e4dc,peot:true},
+ {id:'sombrero',name:'Sombrero',skin:0xf2c38f,hair:0x1c1410,hat:true,peot:true,katan:true},
+ {id:'mia',name:'Mia',skin:0xe0a878,hair:0x2a1a12,girl:true,bow:0xff66c4},
+ {id:'luli',name:'Luli',skin:0xc98b5e,hair:0x9a4a1c,girl:true,bow:0xffe14d},
+ {id:'samurei',name:'Samurei',skin:0x8d5a3b,hair:0x1c1410,kipa:0x15151c,peot:true,tefillin:true,beard:0x1c1410}
+];
+const charOf=id=>CHARS.find(c=>c.id===id)||CHARS[0];
+const heroOpts=ch=>Object.assign({tagColor:'#ffe14d',color:0xe53945,leg:0x1f2a44,lane:2,z:HERO_Z,hero:true},ch,{name:'TÚ'});
+const hero=makeChar(heroOpts(charOf(profile.char)));
+function setHeroLook(ch){
+ const t=makeChar(heroOpts(ch));chars.pop();
+ scene.remove(hero.g,hero.shd);
+ for(const k of['g','body','legs','knees','arms','elbows','shd','shirtParts','pantsParts','tag'])hero[k]=t[k];
+ hero.g.position.set(hero.x,hero.y,hero.z);
+ applySkinVisual(hero,SKINS.find(s=>s.id===profile.equipped)||SKINS[0]);
+}
 applySkinVisual(hero,SKINS.find(s=>s.id===profile.equipped)||SKINS[0]);
 [
  {name:'Sparkle Bug',color:0x3fa9f5,lane:0,z:3.1,kipa:'knit',katan:true,peot:true,hair:0xd9a441},
@@ -1124,6 +1148,22 @@ function renderPass(){
   return '<div class="passNode '+cls+'"><div class="ring">'+(i===lvl?lvl:reward||i)+'</div>Nv.'+i+'</div>';
  }).join('');
 }
+function hx(n){return '#'+n.toString(16).padStart(6,'0');}
+function renderChars(){
+ $('charGrid').innerHTML=CHARS.map(ch=>{
+  const eq=profile.char===ch.id;
+  return '<div class="skinCard'+(eq?' equipped':'')+'" style="--sc:#e53945;--pc:#1f2a44">'+
+   '<div class="skinDoll"><div class="head" style="background:'+hx(ch.skin)+'"></div><div class="shirt"></div><div class="pants"></div></div>'+
+   '<div class="skinName">'+ch.name+'</div>'+
+   (eq?'<button class="skinBtn eq" disabled>Elegido</button>':'<button class="skinBtn" data-ch="'+ch.id+'">Elegir</button>')+'</div>';
+ }).join('');
+}
+$('charGrid').addEventListener('click',e=>{
+ const b=e.target.closest('[data-ch]');if(!b)return;
+ const ch=charOf(b.dataset.ch);profile.char=ch.id;saveProfile();setHeroLook(ch);renderChars();
+});
+$('charBtnStart').addEventListener('click',()=>{renderChars();$('chars').hidden=false;});
+$('charClose').addEventListener('click',()=>{$('chars').hidden=true;});
 function openShop(){renderShop();$('shop').hidden=false;}
 function openPass(){renderPass();$('pass').hidden=false;}
 $('shopBtnStart').addEventListener('click',openShop);
@@ -1393,7 +1433,7 @@ function frame(now){
  requestAnimationFrame(frame);
  const dt=Math.min(.05,(now-prev)/1000||0);prev=now;
  if(!visible||document.hidden||dt<=0)return;
- if(!$('help').hidden||!$('shop').hidden||!$('pass').hidden){renderer.render(scene,camera);return;}
+ if(!$('help').hidden||!$('shop').hidden||!$('chars').hidden||!$('pass').hidden){renderer.render(scene,camera);return;}
  update(dt);renderer.render(scene,camera);
 }
 const fontsReady=document.fonts&&document.fonts.load?Promise.race([Promise.all([document.fonts.load('80px "Lilita One"'),document.fonts.load('800 80px "Rubik"','סֻכָּה')]),new Promise(r=>setTimeout(r,2500))]):Promise.resolve();
