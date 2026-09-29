@@ -508,16 +508,19 @@ const decor=[];
 })();
 
 /* ---------- textures ---------- */
+const PALS=[{n:0,a:'150,40,230',b:'90,20,170',g:'#ff7bff',l:'#e04bff',t:'#3a0a6e'},{n:1,a:'30,170,90',b:'12,110,60',g:'#7dffa8',l:'#3ee07a',t:'#06421f'},{n:2,a:'235,190,20',b:'170,120,10',g:'#ffe680',l:'#ffd23f',t:'#5a3a00'},{n:3,a:'235,80,60',b:'160,30,30',g:'#ff9c8a',l:'#ff5a47',t:'#5a0a0a'},{n:4,a:'30,140,235',b:'15,80,170',g:'#8fd6ff',l:'#3aa8ff',t:'#0a2f6e'}];
+let PAL=PALS[0];
 function blockBase(x,w,h,alpha){
  x.clearRect(0,0,w,h);
- const g=x.createLinearGradient(0,0,0,h);g.addColorStop(0,'rgba(150,40,230,'+alpha+')');g.addColorStop(1,'rgba(90,20,170,'+alpha+')');x.fillStyle=g;x.fillRect(0,0,w,h);
+ const g=x.createLinearGradient(0,0,0,h);g.addColorStop(0,'rgba('+PAL.a+','+alpha+')');g.addColorStop(1,'rgba('+PAL.b+','+alpha+')');x.fillStyle=g;x.fillRect(0,0,w,h);
  const cubes=Math.max(1,Math.round(h/w));const ch=h/cubes;
  for(let i=0;i<cubes;i++){const y=i*ch;
-  x.shadowColor='#ff7bff';x.shadowBlur=18;x.strokeStyle='#e04bff';x.lineWidth=12;x.strokeRect(6,y+6,w-12,ch-12);
+  x.shadowColor=PAL.g;x.shadowBlur=18;x.strokeStyle=PAL.l;x.lineWidth=12;x.strokeRect(6,y+6,w-12,ch-12);
   x.shadowBlur=0;x.strokeStyle='rgba(255,200,255,.95)';x.lineWidth=3;x.strokeRect(6,y+6,w-12,ch-12);}
 }
 const sideTex=(()=>{const c=mk(256,256);blockBase(c.getContext('2d'),256,256,.5);return tex(c);})();
-const sideMat=new THREE.MeshBasicMaterial({map:sideTex,transparent:true});
+const sideMats=PALS.map(p=>{PAL=p;const c=mk(256,256);blockBase(c.getContext('2d'),256,256,.5);return new THREE.MeshBasicMaterial({map:tex(c),transparent:true});});PAL=PALS[0];
+let sideMat=sideMats[0];
 const ghostMat=new THREE.MeshStandardMaterial({color:0x3dff7a,transparent:true,opacity:.28,emissive:0x1f9e45,emissiveIntensity:.8,depthWrite:false});
 function fitText(x,text,max,start,font){font=font||FONT;const pre=font===FONT_HE?'800 ':'';let fs=start;x.font=pre+fs+'px '+font;while(x.measureText(text).width>max&&fs>30){fs-=4;x.font=pre+fs+'px '+font;}return fs;}
 function outlined(x,text,cx,cy,fs,fill,stroke,glowC){x.textAlign='center';x.textBaseline='middle';x.lineJoin='round';x.fillStyle=stroke;x.fillText(text,cx,cy+fs*.1);if(glowC){x.shadowColor=glowC;x.shadowBlur=20;}x.lineWidth=fs*.17;x.strokeStyle=stroke;x.strokeText(text,cx,cy);x.shadowBlur=0;x.fillStyle=fill;x.fillText(text,cx,cy);}
@@ -526,7 +529,7 @@ function faceMats(c){const t=tex(c);return{solid:new THREE.MeshBasicMaterial({ma
   ghost:new THREE.MeshStandardMaterial({map:t,color:0x9dffb8,transparent:true,opacity:.55,emissive:0x1f9e45,emissiveIntensity:.6,depthWrite:false})};}
 const FACE_H=Math.round(512*BH/(LW-.12));
 function picMat(item){
- const k='pic:'+item.i;
+ const k=PAL.n+'pic:'+item.i;
  if(!wordCache.has(k)){
   const c=mk(512,FACE_H),x=c.getContext('2d');blockBase(x,512,FACE_H,.82);
   rr(x,40,FACE_H/2-216,432,432,48);x.fillStyle='rgba(255,255,255,.93)';x.fill();x.lineWidth=8;x.strokeStyle='#3a0a6e';x.stroke();
@@ -536,23 +539,24 @@ function picMat(item){
  return wordCache.get(k);
 }
 function heMat(item){
- const k='he:'+item.he;
+ const k=PAL.n+'he:'+item.he;
  if(!wordCache.has(k)){
   const c=mk(512,FACE_H),x=c.getContext('2d');blockBase(x,512,FACE_H,.82);
-  const fs=fitText(x,item.he,512*.9,170,FONT_HE);x.direction='rtl';outlined(x,item.he,256,FACE_H/2,fs,'#fff','#3a0a6e','#ff7bff');
+  const fs=fitText(x,item.he,512*.9,170,FONT_HE);x.direction='rtl';outlined(x,item.he,256,FACE_H/2,fs,'#fff',PAL.t,PAL.g);
   wordCache.set(k,faceMats(c));
  }
  return wordCache.get(k);
 }
-function wordMat(word){
- if(!wordCache.has(word)){
+function wordMat(word0){
+ const word=word0,ck=PAL.n+'w:'+word0;
+ if(!wordCache.has(ck)){
   const cw=512,ch=Math.round(512*BH/(LW-.12));const c=mk(cw,ch),x=c.getContext('2d');blockBase(x,cw,ch,.82);
-  const fs=fitText(x,word,cw*.92,150);outlined(x,word,cw/2,ch/2,fs,'#fff','#3a0a6e','#ff7bff');
+  const fs=fitText(x,word,cw*.92,150);outlined(x,word,cw/2,ch/2,fs,'#fff',PAL.t,PAL.g);
   const t=tex(c);
-  wordCache.set(word,{solid:new THREE.MeshBasicMaterial({map:t,transparent:true}),
+  wordCache.set(ck,{solid:new THREE.MeshBasicMaterial({map:t,transparent:true}),
    ghost:new THREE.MeshStandardMaterial({map:t,color:0x9dffb8,transparent:true,opacity:.55,emissive:0x1f9e45,emissiveIntensity:.6,depthWrite:false})});
  }
- return wordCache.get(word);
+ return wordCache.get(ck);
 }
 function signMat(title,color,draw){
  const c=mk(512,640),x=c.getContext('2d');
@@ -756,6 +760,7 @@ function updateLasers(dt){
 const CYCLE=['word','spikes','steps','word','laser','spikes','bounce','word','hurdles','spikes','pistons','word','stairs','spikes','laser'];
 function nextWave(){
  wave++;hudWave();
+ PAL=PALS[(wave-1)%PALS.length];sideMat=sideMats[PAL.n];
  const t=CYCLE[(wave-1)%CYCLE.length];
  if(t==='laser')spawnLaserWave();
  else if(t==='steps')spawnSteps();
