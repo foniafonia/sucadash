@@ -49,3 +49,6 @@ No se ha localizado el motor «codecar» mencionado en otro hilo; este usa un mo
 ## Tienda, skins y pase de batalla
 
 Al terminar cada partida se ganan monedas y XP según los aciertos y la oleada alcanzada. Con las monedas se compran skins (cambian el color de la camisa y el pantalón) en la Tienda, accesible desde la pantalla de inicio y desde la de «¡Eliminado!». El XP sube el Pase de Batalla (10 niveles); en el nivel 5 y el 10 se desbloquea una skin especial gratis. Todo se guarda en `localStorage` del navegador: es una economía del propio juego, sin pagos ni conexión a ninguna tienda real.
+
+## Música
+"Bonkers for Arcades" de Eric Matyas, soundimage.org (libre con crédito). Misma pista que FonoKart. Botón de música arriba a la derecha para silenciarla.
