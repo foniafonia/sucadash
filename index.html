@@ -1083,6 +1083,7 @@ function showBanner(winner){
  $('banTime').textContent=fmt(runT);
  $('banStats').textContent=winner?'Eres el último en pie · Oleada '+wave+' · '+hits+(hits===1?' acierto':' aciertos'):(lastMiss?'Era '+lastMiss+' · ':'')+'Oleada '+wave+' · '+hits+(hits===1?' acierto':' aciertos');
  const r=grantRewards(winner);
+ if(!auto)hitCount('partidas');
  $('rewardLine').innerHTML='<span><span class="ic"></span> +'+r.coinsEarned+'</span><span>✦ +'+r.xpEarned+' XP</span>';
  $('ban').hidden=false;hud.pop.className='pop';
 }
@@ -1466,6 +1467,10 @@ function frame(now){
  update(dt);renderer.render(scene,camera);
 }
 const fontsReady=document.fonts&&document.fonts.load?Promise.race([Promise.all([document.fonts.load('80px "Lilita One"'),document.fonts.load('800 80px "Rubik"','סֻכָּה')]),new Promise(r=>setTimeout(r,2500))]):Promise.resolve();
+/* Contadores anónimos (Abacus): sin cuentas ni cookies. Dispositivo = navegador, no persona. */
+function hitCount(k){try{if(window.fetch)fetch('https://abacus.jasoncameron.dev/hit/foniafonia-juegos/sucadash_'+k).catch(()=>{});}catch(_){}}
+hitCount('aperturas');
+try{if(!localStorage.getItem('sucadash-contado')){hitCount('dispositivos');localStorage.setItem('sucadash-contado','1');}}catch(_){}
 fontsReady.catch(()=>{}).then(()=>{updScore();requestAnimationFrame(t=>{prev=t;frame(t);});});
 })();
 </script>

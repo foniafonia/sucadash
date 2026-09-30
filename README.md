@@ -55,3 +55,6 @@ Al terminar cada partida se ganan monedas y XP según los aciertos y la oleada a
 
 ## Voz
 Voz generada con Piper (Open Home Foundation), modelo es_ES-sharvard-medium, entrenado sobre el corpus de la Universidad de Edimburgo. Licencia CC-BY 3.0. Clips en `voz/`: dice la palabra al acertar y «Era …» al fallar.
+
+## Contadores
+Contadores anónimos con Abacus (sin cuentas ni cookies): `sucadash_aperturas`, `sucadash_dispositivos` (navegador, no persona) y `sucadash_partidas`. Consulta: `curl -s https://abacus.jasoncameron.dev/get/foniafonia-juegos/sucadash_partidas`.
